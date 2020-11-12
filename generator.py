@@ -62,7 +62,7 @@ def measure_generator(time_sig, inst_range, chords=False):
 # make the parts
 def part_generator(part, chords=False):
     for b in range(0, BARS):
-        part.append(measure_generator(time_signatures[b % len(time_signatures)], ranges[i].value, chords))
+        part.append(measure_generator(time_signatures[b % len(time_signatures)], ranges[instruments.index(part.instrument)].value, chords))
         
 # make the score
 def score_generator():
