@@ -75,11 +75,14 @@ def score_generator():
             part_generator(upper, True)
             lower.instrument = instruments[i]
             part_generator(lower, False)
+            parts.append(upper)
+            parts.append(lower)
             parts.append(layout.StaffGroup([upper, lower], name=instruments[i]().bestName(), abbreviation=instruments[i]().instrumentAbbreviation, symbol='brace'))
         else:
             p = stream.Part()
             p.instrument = instruments[i]
             part_generator(p)
+            parts.append(p)
             parts.append(layout.StaffGroup([p], name=instruments[i]().bestName(), abbreviation=instruments[i]().instrumentAbbreviation, symbol='bracket'))
     return parts
 
