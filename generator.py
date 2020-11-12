@@ -68,7 +68,7 @@ def part_generator(part, chords=False):
 def score_generator():
     parts = []
     for i in range(0, len(instruments)):
-        if ('KeyboardInstrument' in instruments[i].classes):
+        if ('KeyboardInstrument' in instruments[i]().classes):
             upper = stream.Part()
             lower = stream.Part()
             upper.instrument = instruments[i]
