@@ -66,6 +66,7 @@ def part_generator(part, chords=False):
         
 # make the score
 def score_generator():
+    layouts = []
     parts = []
     for i in range(0, len(instruments)):
         if ('KeyboardInstrument' in instruments[i]().classes):
@@ -77,14 +78,15 @@ def score_generator():
             part_generator(lower, False)
             parts.append(upper)
             parts.append(lower)
-            parts.append(layout.StaffGroup([upper, lower], name=instruments[i]().bestName(), abbreviation=instruments[i]().instrumentAbbreviation, symbol='brace'))
+            layouts.append(layout.StaffGroup([upper, lower], name=instruments[i]().bestName(), abbreviation=instruments[i]().instrumentAbbreviation, symbol='brace'))
         else:
             p = stream.Part()
             p.instrument = instruments[i]
             part_generator(p)
             parts.append(p)
-            parts.append(layout.StaffGroup([p], name=instruments[i]().bestName(), abbreviation=instruments[i]().instrumentAbbreviation, symbol='bracket'))
-    return parts
+            layouts.append(layout.StaffGroup([p], name=instruments[i]().bestName(), abbreviation=instruments[i]().instrumentAbbreviation, symbol='bracket'))
+    to_score = layouts + parts
+    return to_score
 
 if __name__ == '__main__':
     BARS = int(input("How many bars? ") or '8')
