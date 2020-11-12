@@ -32,6 +32,7 @@ random.shuffle(time_signatures)
 
 # generate a random measure
 def measure_generator(time_sig, inst_range, chords=False):
+    print("\n\nNEW MEASURE\n\n")
     bar = stream.Measure()
     bar.timeSignature = meter.TimeSignature(time_sig)
     current_duration = 0
@@ -41,6 +42,8 @@ def measure_generator(time_sig, inst_range, chords=False):
             to_add.duration = durations[random.randint(0, len(durations) - 1)]
             if (current_duration + to_add.duration._getQuarterLength() <= bar.timeSignature.barDuration._getQuarterLength()):
                 current_duration += to_add.duration._getQuarterLength()
+                print("Current duration ==>> ", current_duration)
+                print("Target duration ==>> ", bar.timeSignature.barDuration._getQuarterLength())
                 bar.append(to_add)
         else:
             if (chords == True):
@@ -50,12 +53,16 @@ def measure_generator(time_sig, inst_range, chords=False):
                 to_add.duration = durations[random.randint(0, len(durations) - 1)]
                 if (current_duration + to_add.duration._getQuarterLength() <= bar.timeSignature.barDuration._getQuarterLength()):
                     current_duration += to_add.duration._getQuarterLength()
+                    print("Current duration ==>> ", current_duration)
+                    print("Target duration ==>> ", bar.timeSignature.barDuration._getQuarterLength())
                     bar.append(to_add)
             else:
                 to_add = note.Note(random.randint(max(MIN_MIDI, inst_range[0]), min(inst_range[1], MAX_MIDI)))
                 to_add.duration = durations[random.randint(0, len(durations) - 1)]
                 if (current_duration + to_add.duration._getQuarterLength() <= bar.timeSignature.barDuration._getQuarterLength()):
                     current_duration += to_add.duration._getQuarterLength()
+                    print("Current duration ==>> ", current_duration)
+                    print("Target duration ==>> ", bar.timeSignature.barDuration._getQuarterLength())
                     bar.append(to_add)
     return bar
 
@@ -85,13 +92,18 @@ def score_generator():
             part_generator(p)
             parts.append(p)
             layouts.append(layout.StaffGroup([p], name=instruments[i]().bestName(), abbreviation=instruments[i]().instrumentAbbreviation, symbol='bracket'))
-    to_score = layouts + parts
+    # to_score = layouts + parts
+    to_score = parts
+    print(to_score)
     return to_score
 
 if __name__ == '__main__':
     BARS = int(input("How many bars? ") or '8')
+    print(BARS)
     REST_DISTRIBUTION = float(input("Enter the distribution of rests as a decimal between 0 and 1 (default 0.2): ") or '0.2')
+    print(REST_DISTRIBUTION)
     MAX_CHORD_SIZE = int(input("Enter the maximum chord size in notes (default 4): ") or '4')
+    print(MAX_CHORD_SIZE)
     out = input("Enter output path (default is current directory): ")
 
 
@@ -101,4 +113,7 @@ if (out == ""):
     p = Path('./ChanceComposition')
 else:
     p = Path(out + "/ChanceComposition")
-sc.write('lily.pdf', p)
+# sc.write('lily.pdf', p)
+sc.show('lily')
+
+
