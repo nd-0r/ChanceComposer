@@ -44,7 +44,7 @@ def measure_generator(time_sig, inst_range, chords=False):
                 bar.append(to_add)
         else:
             if (chords == True):
-                chord_size = random.ranint(0, MAX_CHORD_SIZE)
+                chord_size = random.randint(0, MAX_CHORD_SIZE)
                 pitches = [pitch.Pitch(random.randint(max(MIN_MIDI, inst_range[0]), min(inst_range[1], MAX_MIDI))) for i in range(0, chord_size)]
                 to_add = chord.Chord(pitches)
                 to_add.duration = durations[random.randint(0, len(durations) - 1)]
