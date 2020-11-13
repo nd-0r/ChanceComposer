@@ -112,8 +112,8 @@ if __name__ == '__main__':
 # drive the code
 sc = stream.Score(score_generator())
 if (out == ""):
-    fp = Path('./ChanceComposition')
+    fp = Path('./ChanceComposition2')
 else:
-    fp = Path(out + "/ChanceComposition")
+    fp = Path(out + "/ChanceComposition2")
 sc.write('midi', fp)
 sc.write('musicxml.pdf', fp)
