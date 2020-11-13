@@ -4,11 +4,9 @@ from enum import Enum
 from pathlib import Path
 
 ### CONSTANTS ###
-# Instrument ranges from this website: 
-# https://soundprogramming.net/file-formats/midi-note-ranges-of-orchestral-instruments/
 
 MAX_MIDI = 84
-MIN_MIDI = 60
+MIN_MIDI = 36
 MAX_CHORD_SIZE = 4
 
 instruments = [instrument.Flute, instrument.Clarinet, instrument.Violin, instrument.Violoncello, instrument.Piano]
@@ -16,8 +14,8 @@ class range_enum(Enum):
     FLUTE_RANGE = (60, 96)
     CLARINET_RANGE = (50, 94)
     VIOLIN_RANGE = (55, 103)
-    CELLO_RANGE = (36, 76)
-    PIANO_RANGE = (21, 109)
+    CELLO_RANGE = (36, 56)
+    PIANO_RANGE = [[21, 60], [60, 109]]
 ranges = list(range_enum)
 
 BARS = 8
@@ -25,16 +23,21 @@ BARS = 8
 # probabilities:
 REST_DISTRIBUTION = 0.2
 durations = [duration.Duration(d, dots=o) for o in range(0, 3) for d in {1/4, 1/2, 1, 2}]
-time_signatures = ['4/4', '2/2', '2/4', '3/4', '3/8', '6/8', '9/8', '12/8']
+time_signatures = ['4/4', '4/4', '4/4', '4/4', '4/4', '4/4', '5/4', '9/8', '12/8', '3/8', '3/4', '6/8']
+last_ts = ''
 random.shuffle(time_signatures)
 
 ### END CONSTANTS ###
 
 # generate a random measure
 def measure_generator(time_sig, inst_range, chords=False):
-    print("\n\nNEW MEASURE\n\n")
     bar = stream.Measure()
-    bar.timeSignature = meter.TimeSignature(time_sig)
+    ts = meter.TimeSignature(time_sig)
+    global last_ts
+    if (time_sig is last_ts):
+        ts.symbol = ' '
+    last_ts = time_sig
+    bar.timeSignature = ts
     current_duration = 0
     while (current_duration < bar.timeSignature.barDuration._getQuarterLength()):
         if (random.random() < REST_DISTRIBUTION):
@@ -42,59 +45,58 @@ def measure_generator(time_sig, inst_range, chords=False):
             to_add.duration = durations[random.randint(0, len(durations) - 1)]
             if (current_duration + to_add.duration._getQuarterLength() <= bar.timeSignature.barDuration._getQuarterLength()):
                 current_duration += to_add.duration._getQuarterLength()
-                print("Current duration ==>> ", current_duration)
-                print("Target duration ==>> ", bar.timeSignature.barDuration._getQuarterLength())
                 bar.append(to_add)
         else:
             if (chords == True):
-                chord_size = random.randint(0, MAX_CHORD_SIZE)
+                chord_size = random.randint(1, MAX_CHORD_SIZE)
                 pitches = [pitch.Pitch(random.randint(max(MIN_MIDI, inst_range[0]), min(inst_range[1], MAX_MIDI))) for i in range(0, chord_size)]
                 to_add = chord.Chord(pitches)
                 to_add.duration = durations[random.randint(0, len(durations) - 1)]
                 if (current_duration + to_add.duration._getQuarterLength() <= bar.timeSignature.barDuration._getQuarterLength()):
                     current_duration += to_add.duration._getQuarterLength()
-                    print("Current duration ==>> ", current_duration)
-                    print("Target duration ==>> ", bar.timeSignature.barDuration._getQuarterLength())
                     bar.append(to_add)
             else:
                 to_add = note.Note(random.randint(max(MIN_MIDI, inst_range[0]), min(inst_range[1], MAX_MIDI)))
                 to_add.duration = durations[random.randint(0, len(durations) - 1)]
                 if (current_duration + to_add.duration._getQuarterLength() <= bar.timeSignature.barDuration._getQuarterLength()):
                     current_duration += to_add.duration._getQuarterLength()
-                    print("Current duration ==>> ", current_duration)
-                    print("Target duration ==>> ", bar.timeSignature.barDuration._getQuarterLength())
                     bar.append(to_add)
     return bar
 
 # make the parts
-def part_generator(part, chords=False):
+def part_generator(part, r, chords=False):
     for b in range(0, BARS):
-        part.append(measure_generator(time_signatures[b % len(time_signatures)], ranges[instruments.index(part.instrument)].value, chords))
+        part.append(measure_generator(time_signatures[b % len(time_signatures)], r, chords))
         
 # make the score
 def score_generator():
+    to_score = stream.Score()
     layouts = []
-    parts = []
     for i in range(0, len(instruments)):
         if ('KeyboardInstrument' in instruments[i]().classes):
             upper = stream.Part()
             lower = stream.Part()
-            upper.instrument = instruments[i]
-            part_generator(upper, True)
-            lower.instrument = instruments[i]
-            part_generator(lower, False)
-            parts.append(upper)
-            parts.append(lower)
-            layouts.append(layout.StaffGroup([upper, lower], name=instruments[i]().bestName(), abbreviation=instruments[i]().instrumentAbbreviation, symbol='brace'))
+            upper.insert(0, instruments[i]())
+            upper.insert(0, clef.GClef())
+            part_generator(upper, ranges[i].value[1], True)
+            lower.insert(0, instruments[i]())
+            lower.insert(0, clef.BassClef())
+            part_generator(lower, ranges[i].value[0], False)
+            to_score.insert(0, upper)
+            to_score.insert(0, lower)
+            staff_group = layout.StaffGroup([upper, lower], name=instruments[i]().bestName(), abbreviation=instruments[i]().instrumentAbbreviation, symbol='brace')
+            layouts.append(staff_group)
         else:
             p = stream.Part()
-            p.instrument = instruments[i]
-            part_generator(p)
-            parts.append(p)
-            layouts.append(layout.StaffGroup([p], name=instruments[i]().bestName(), abbreviation=instruments[i]().instrumentAbbreviation, symbol='bracket'))
-    # to_score = layouts + parts
-    to_score = parts
-    print(to_score)
+            p.insert(0, instruments[i]())
+            part_generator(p, ranges[i].value)
+            if (instruments[i] is instrument.Violoncello):
+                p.insert(0, clef.BassClef())
+            to_score.insert(0, p)
+            staff_group = layout.StaffGroup([p], name=instruments[i]().bestName(), abbreviation=instruments[i]().instrumentAbbreviation, symbol='bracket')
+            layouts.append(staff_group)
+    for lay in layouts:
+        to_score.insert(0, lay)
     return to_score
 
 if __name__ == '__main__':
@@ -110,10 +112,8 @@ if __name__ == '__main__':
 # drive the code
 sc = stream.Score(score_generator())
 if (out == ""):
-    p = Path('./ChanceComposition')
+    fp = Path('./ChanceComposition')
 else:
-    p = Path(out + "/ChanceComposition")
-# sc.write('lily.pdf', p)
-sc.show('lily')
-
-
+    fp = Path(out + "/ChanceComposition")
+sc.write('midi', fp)
+sc.write('musicxml.pdf', fp)
